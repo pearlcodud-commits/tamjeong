@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>기후 탐정단: 탄소의 비밀</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#160d33;--cd:#2a1b5c;--pk:#ff5fd2;--cy:#4df3ff;--ye:#ffe45e}
+*{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{background:radial-gradient(circle at 20% 0,#3b1a7a,var(--bg) 60%) fixed;color:#fff;font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif;min-height:100vh}
+.cd{background:var(--cd);border:3px solid var(--cy);border-radius:20px;box-shadow:0 0 18px #4df3ff55}
+.btn{background:linear-gradient(#ff5fd2,#c026d3);border:3px solid #fff;border-radius:16px;padding:12px 18px;font-size:1.1rem;box-shadow:0 5px 0 #7e1a8f,0 0 14px #ff5fd288;transition:transform .12s}
+.btn:active{transform:translateY(4px) scale(.94);box-shadow:0 1px 0 #7e1a8f}
+.btn:disabled{filter:grayscale(1);opacity:.5}
+.btn.cy{background:linear-gradient(#4df3ff,#0891b2);box-shadow:0 5px 0 #0e5a73;color:#06222b}
+.pop{animation:pop .45s cubic-bezier(.3,1.8,.5,1)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.slot{height:56px;overflow:hidden}
+.reel span{display:block;height:56px;line-height:56px;font-size:40px;text-align:center}
+.reel{animation:sl .5s steps(4) infinite}.sel .reel{animation:none}
+@keyframes sl{to{transform:translateY(-224px)}}
+.p{position:fixed;pointer-events:none;z-index:99;animation:fly 1.2s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(540deg);opacity:0}}
+.bar{height:22px;border-radius:99px;background:linear-gradient(90deg,var(--cy),var(--pk));transition:width .8s}
+.in{width:100%;background:#120a2a;border:3px solid var(--pk);border-radius:14px;padding:10px;font-size:1rem;color:#fff}
+.tab{padding:8px 12px;border-radius:12px 12px 0 0;background:#120a2a}.tab.on{background:var(--ye);color:#222}
+.me{background:#4df3ff;color:#06222b;margin-left:auto}.bot{background:#3d2a7d}
+.bub{max-width:85%;padding:8px 12px;border-radius:16px;margin:6px 0;width:fit-content}
+.news{background:#fff8e1;color:#222;border:4px double #222;border-radius:8px;font-family:serif}
+</style></head>
+<body>
+<header class="sticky top-0 z-40 p-2 flex items-center gap-2 flex-wrap" style="background:#160d33ee">
+ <b class="text-lg" style="color:var(--ye)">🌍 기후 탐정단</b>
+ <div class="flex-1 min-w-[90px]"><div class="text-xs">LV.<span id="lv">0</span> · ⭐<span id="sc">0</span></div><div class="rounded-full bg-black/40"><div id="xp" class="bar" style="width:0"></div></div></div>
+ <button class="btn cy !py-1 !px-3 !text-sm" onclick="quiz()">🎮 퀴즈</button>
+ <button class="btn !py-1 !px-3 !text-sm" onclick="timeM()">🔄 타임머신: 모자 바꿔서 다시 하기</button>
+</header>
+<main id="app" class="max-w-3xl mx-auto p-3"></main>
+<script>
+const $=s=>document.querySelector(s),A=$('#app');
+const R=[
+{id:'f',em:'🟢',n:'공장 전문가',hat:'🧢',pw:'제품 생산 라인의 비밀을 파헤치는 기술자',sec:1,col:'#4ade80',
+ con:'공장은 철강·시멘트·플라스틱을 만들 때 석탄과 가스를 태워 아주 뜨거운 열을 만들어요. 이때 이산화탄소(CO2)가 많이 나와요.',
+ ev:'공장에서 물건을 만들 때 연료를 태우면 CO2가 나온다',sh:'공장은 물건을 만들 때 연료를 태워 CO2가 나와요.',
+ iv:['철강 공장 김 반장님','쇠를 녹이려면 불이 엄청 뜨거워야 해요. 그만큼 연료도 많이 쓰죠.'],
+ say:'나는 공장 전문가! 철강·시멘트를 만들 땐 연료를 엄청 태워서 CO2가 나와.',q:'공장 CO2를 줄이려면?',g:'물건을 아껴 쓰고 재활용해요',b:'물건을 많이 사서 금방 버려요'},
+{id:'p',em:'🔵',n:'발전소 전문가',hat:'🎩',pw:'전기의 탄생과 화석연료를 추적하는 에너지 전사',sec:0,col:'#60a5fa',
+ con:'전기는 석탄·천연가스를 태워 만드는 경우가 많아요. 우리가 전기를 쓸수록 발전소에서 CO2가 나올 수 있어요.',
+ ev:'전기를 만들 때 석탄·가스를 태우면 CO2가 나온다',sh:'전기를 만들 때 석탄·가스를 태우면 CO2가 나와요.',
+ iv:['발전소 박 연구원님','전기는 눈에 안 보여도 어딘가에서 연료를 태워 만든 걸 수 있어요.'],
+ say:'나는 발전소 전문가! 전기는 석탄·가스를 태워 만들 때가 많아서, 전기를 쓸수록 CO2가 생겨!',q:'집에서 전기를 아끼려면?',g:'안 쓰는 플러그를 뽑아요',b:'불을 켜 두고 외출해요'},
+{id:'t',em:'🩷',n:'교통수단 전문가',hat:'👒',pw:'매연을 뿜는 자동차와 비행기의 속도를 잡는 레이서',sec:2,col:'#f472b6',
+ con:'휘발유·경유 자동차와 비행기는 연료를 태워 달려요. 배기가스에는 CO2가 들어 있어요.',
+ ev:'자동차·비행기가 연료를 태우면 CO2가 나온다',sh:'자동차·비행기는 연료를 태워 달리며 CO2를 내보내요.',
+ iv:['버스 기사 이 아저씨','버스 한 대에 여러 명이 타면 자동차를 여러 대 타는 것보다 CO2를 아낄 수 있어요.'],
+ say:'나는 교통수단 전문가! 자동차·비행기는 연료를 태워 달려서 배기가스에 CO2가 있어!',q:'학교 갈 때 좋은 방법은?',g:'걷기·자전거·버스를 타요',b:'가까워도 꼭 혼자 차를 타요'},
+{id:'h',em:'🟠',n:'건물난방 전문가',hat:'⛑️',pw:'냉난방의 허를 찌르는 에너지 탐정',sec:3,col:'#fb923c',
+ con:'겨울 난방과 여름 냉방에는 전기와 가스가 많이 들어요. 단열이 약한 건물은 에너지를 더 많이 써요.',
+ ev:'난방·냉방에 에너지를 쓰면 CO2가 나올 수 있다',sh:'난방·냉방에 에너지를 많이 쓰면 CO2가 늘어요.',
+ iv:['건물 관리 최 선생님','창문 틈만 막아도 따뜻함이 달아나지 않아서 난방을 덜 해도 돼요.'],
+ say:'나는 건물난방 전문가! 난방·냉방에도 에너지가 많이 들어서 CO2가 생겨!',q:'난방을 줄이는 방법은?',g:'내복 입고 문틈을 막아요',b:'창문 열고 히터를 세게 틀어요'}];
+const SEC=[['⚡발전·전기',37],['🏭공장·산업',35],['🚗교통',14],['🏢건물',6]];
+const QZ=[['CO2가 지구에서 하는 일은?','열을 가둔다','비를 만든다','별을 만든다'],['석탄·석유를 태우면?','CO2가 나온다','산소만 나온다','아무것도 안 나온다'],['기후변화를 줄이는 행동은?','안 쓰는 전등 끄기','에어컨 켜고 문 열기','물건 마구 버리기'],['자동차 대신 타면 CO2가 줄어드는 것은?','버스·지하철·자전거','혼자 타는 차','비행기'],['지구 평균 온도가 점점 오르는 현상은?','지구 온난화','지구 냉각화','지구 멈춤']];
+let S;
+function init(){S={r:null,name:'',stage:0,ev:[],sum:'',ci:0,title:'',rep:'',body:'',score:0,q:0,back:1};go(0)}
+function go(n){S.stage=n;if(n>0&&n<6)S.back=n;window.scrollTo(0,0);$('#lv').textContent=Math.min(n,5);$('#xp').style.width=Math.min(n,5)*20+'%';$('#sc').textContent=S.score;[()=>intro(),pick,evid,chat,edit,news,qz][n]()}
+function timeM(){if(confirm('처음으로 돌아가 다른 전문가 모자를 고를 수 있어요! 다시 도전하시겠습니까?')){init();go(1)}}
+function quiz(){S.q=0;S.score=0;go(6)}
+function burst(e,n,x,y){x=x??innerWidth/2;y=y??innerHeight/2;for(let i=0;i<n;i++){const s=document.createElement('span');s.className='p';s.textContent=e[i%e.length];s.style.cssText+=`left:${x}px;top:${y}px;font-size:${18+Math.random()*20}px;--dx:${(Math.random()-.5)*600}px;--dy:${(Math.random()-.8)*500}px`;document.body.appendChild(s);setTimeout(()=>s.remove(),1300)}}
+let ac;function beep(f=520){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.08);o.stop(ac.currentTime+.09)}catch(e){}}
+addEventListener('pointerdown',e=>{beep(400+Math.random()*400);burst(['✨','⭐'],4,e.clientX,e.clientY)});
+function intro(){A.innerHTML=`<div class="cd p-5 text-center pop"><div class="text-6xl">🌡️🌍🔥</div><h1 class="text-3xl my-3" style="color:var(--ye)">기후 탐정단: 탄소의 비밀</h1>
+<p class="text-lg leading-8">2026년, 지구의 온도가 급상승하고 있다!<br>지구 온난화를 막기 위해 미래 기후 과학 본부에서 파견된 당신.<br>전문가 모자를 쓰고 <b style="color:var(--cy)">인간 활동 속 탄소의 비밀</b>을 파헤쳐라!</p>
+<button class="btn mt-5 text-xl" onclick="go(1)">▶ START</button></div>`}
+function pick(){A.innerHTML=`<h2 class="text-2xl text-center mb-2" style="color:var(--ye)">🎰 운명의 모자 선택소</h2>
+<div class="grid grid-cols-2 gap-3">${R.map((r,i)=>`<div class="cd p-3 text-center ${S.r===r?'sel':''}" id="c${i}" style="border-color:${r.col}" onclick="sel(${i})">
+<div class="slot"><div class="reel">${[r.hat,'🎓','🪖','👑'].map(h=>`<span>${h}</span>`).join('')}</div></div>
+<div class="text-lg mt-1">${r.em} ${r.n}</div><div class="text-sm opacity-90">${r.pw}</div></div>`).join('')}</div>
+<div class="cd p-3 mt-3"><input id="nm" class="in" maxlength="8" placeholder="닉네임을 입력하세요" value="${S.name}">
+<button class="btn w-full mt-3 text-xl" onclick="start()">🚀 요원 출동!</button></div>`}
+function sel(i){S.r=R[i];pick();burst([R[i].hat,'✨'],14);$('#c'+i).classList.add('pop')}
+function start(){const n=$('#nm').value.trim();if(!S.r)return alert('먼저 전문가 카드를 눌러 모자를 골라요!');if(!n)return alert('닉네임을 입력해요!');S.name=n;
+A.innerHTML=`<div class="cd p-10 text-center"><div class="text-8xl" style="animation:sl .3s steps(4) infinite">${S.r.hat}</div><h2 class="text-3xl mt-4 pop">변신! ${S.r.em} ${S.name} 요원</h2></div>`;burst([S.r.hat,'⚡','🌟'],30);setTimeout(()=>go(2),1800)}
+let tab=0;
+function evid(){const r=S.r,bar=(l,v,h)=>`<div class="mb-2 text-sm">${l} ${v}%<div class="bg-black/30 rounded-full"><div class="bar" style="width:${v*2}%;${h?'background:'+r.col:''}"></div></div></div>`;
+const T=[`<p class="leading-7">🕵️ <b>${r.em} ${r.n}의 첩보</b><br>${r.con}</p><p class="leading-7 mt-2">🌡️ CO2는 지구의 열을 가두는 이불 같아요. 사람이 연료를 태울수록 이불이 두꺼워져 지구가 더워져요.</p>`,
+`<b>📊 우리나라 CO2 배출 비율 (수업용으로 어림한 값)</b><div class="mt-2">${SEC.map((s,i)=>bar(s[0],s[1],i==r.sec)).join('')}</div><b>공기 중 CO2 (ppm)</b><div class="mt-2 text-sm">1900년대 초 약 300 <div class="bar" style="width:60%"></div>2020년대 약 420 <div class="bar" style="width:84%"></div></div>
+<p class="text-sm mt-2">📰 (수업용 가상 뉴스) 「올여름 폭염 일수 늘어… 연료 사용 줄여야」</p>
+<div class="flex gap-2 flex-wrap mt-2"><a class="btn cy !text-sm" target="_blank" href="https://www.climate.go.kr">🔗 기후정보포털</a><a class="btn cy !text-sm" target="_blank" href="https://www.gihoo.or.kr">🔗 온실가스종합정보센터</a></div>`,
+`<p class="leading-7">🎤 <b>${r.iv[0]}</b><br>“${r.iv[1]}”</p><p class="leading-7 mt-3">🎤 <b>기후 과학자 한 박사님</b><br>“CO2가 늘어난 가장 큰 이유는 사람이 석탄·석유·가스를 많이 태웠기 때문이에요.”</p>`];
+const E=['CO2 같은 온실가스가 지구의 열을 가둔다','사람이 연료를 태우면서 CO2가 늘었다',r.ev,'CO2는 늘어나도 지구에 아무 영향이 없다','기후변화는 화산 때문에만 생긴다'];
+A.innerHTML=`<h2 class="text-2xl mb-2" style="color:var(--ye)">📒 기후 탐정 수첩</h2><div class="flex gap-1">${['긴급 첩보 파일','현장 잠입 데이터','목격자 인터뷰'].map((t,i)=>`<button class="tab ${tab==i?'on':''}" onclick="tab=${i};evid()">${t}</button>`).join('')}</div>
+<div class="cd p-4 pop">${T[tab]}</div>
+<div class="cd p-4 mt-3" style="border-color:var(--ye)"><b>🔒 미션 잠금 장치</b><p class="text-sm mb-2">진짜 핵심 증거 3가지만 체크하세요!</p>
+${E.map((e,i)=>`<label class="flex gap-2 items-center py-2 text-base"><input type="checkbox" class="w-6 h-6" ${S.ev.includes(i)?'checked':''} onchange="tg(${i},this.checked)">${e}</label>`).join('')}
+<p class="mt-2">우리 팀(${r.n})이 범인인 이유를 직접 요약해요 (50자 이상)</p><textarea id="sm" class="in" rows="4" oninput="S.sum=this.value;ck()">${S.sum}</textarea><div id="cnt" class="text-right text-sm"></div>
+<button id="nx" class="btn w-full mt-2" onclick="go(3)">다음 단계로 ▶</button></div>`;ck()}
+function tg(i,c){S.ev=c?[...S.ev,i]:S.ev.filter(x=>x!=i);ck()}
+function ck(){const ok=[0,1,2].every(i=>S.ev.includes(i))&&S.ev.length==3&&S.sum.trim().length>=50;$('#cnt').textContent=S.sum.trim().length+'/50자';$('#nx').disabled=!ok}
+let ch;
+function chat(){S.ci=0;ch=R.filter(r=>r!==S.r);A.innerHTML=`<h2 class="text-2xl mb-2" style="color:var(--ye)">💬 모둠 단톡방</h2><div class="cd p-3" id="log" style="min-height:260px"></div><div id="ch" class="grid gap-2 mt-2"></div>
+<div class="flex gap-2 mt-2"><input id="tx" class="in" placeholder="채팅으로 말해 보세요"><button class="btn" onclick="say()">전송</button></div><div id="fin"></div>`;round()}
+function msg(t,c,w){const d=document.createElement('div');d.className='bub pop '+c;d.innerHTML=w?`<b class="text-xs">${w.em} ${w.n}</b><br>${t}`:t;$('#log').appendChild(d);d.scrollIntoView({block:'nearest'})}
+function round(){if(S.ci>=3){msg('모두 고마워! 공장·전기·교통·건물이 모두 연료를 태워 CO2를 만든다는 연결고리가 완성됐어! 🎉','bot',{em:'🤖',n:'본부'});burst(['🎉','⭐'],30);$('#fin').innerHTML='<button class="btn w-full mt-3" onclick="go(4)">📰 기자실로 ▶</button>';return}
+const r=ch[S.ci];msg(r.say,'bot',r);setTimeout(()=>{msg(r.q,'bot',r);const o=[[r.g,1],[r.b,0]].sort(()=>Math.random()-.5);$('#ch').innerHTML=o.map(x=>`<button class="btn cy" onclick="ans(${x[1]},this.textContent)">${x[0]}</button>`).join('')},700)}
+function ans(ok,t){msg(t,'me');if(ok){$('#ch').innerHTML='';msg('맞아! 최고야 👍 '+S.name+' 덕분에 알았어!','bot',ch[S.ci]);S.ci++;burst(['🪙','⭐'],12);setTimeout(round,900)}else msg('음, 그러면 CO2가 더 늘어나요! 다시 골라 봐 😅','bot',ch[S.ci])}
+function say(){const v=$('#tx').value.trim();if(!v)return;$('#tx').value='';msg(v,'me');const r=ch[Math.min(S.ci,2)],a=['오 좋은 생각이야!','와, 나도 그렇게 생각해!','우리 팀 최고 😎','그 얘기 기사에 넣자!'];setTimeout(()=>msg(a[Math.random()*4|0],'bot',r),500)}
+function edit(){A.innerHTML=`<h2 class="text-2xl mb-2" style="color:var(--ye)">📰 특종 기자실</h2><div class="cd p-4"><label>기사 제목</label><input id="ti" class="in mb-2" placeholder="예) [단독] 공장 굴뚝에서 뿜어져 나온 CO2, 지구가 아프다!" value="${S.title}">
+<label>대표 기자 이름</label><input id="rp" class="in mb-2" value="${S.rep||S.name}"><label>기사 본문 (아래 문장을 눌러 붙여도 돼요)</label>
+<div class="flex flex-wrap gap-2 my-2">${R.map((r,i)=>`<button class="btn cy !text-sm !py-1" onclick="ad('${r.sh}')">${r.em} ${r.n.slice(0,2)}</button>`).join('')}</div>
+<textarea id="bd" class="in" rows="6" placeholder="기후변화와 인간 활동은 어떤 관련이 있을까요?">${S.body}</textarea><div id="c2" class="text-sm text-right"></div>
+<button id="pb" class="btn w-full mt-2" onclick="pubA()">✅ 기사 발행 승인</button></div>`;['ti','rp','bd'].forEach(i=>$('#'+i).oninput=ck2);ck2()}
+function ad(t){$('#bd').value+=(t+' ');ck2()}
+function ck2(){S.title=$('#ti').value;S.rep=$('#rp').value;S.body=$('#bd').value;$('#c2').textContent=S.body.trim().length+'/40자';$('#pb').disabled=!(S.title.trim().length>=5&&S.rep.trim()&&S.body.trim().length>=40)}
+function pubA(){burst(['📰','✅'],20);go(5)}
+function news(){A.innerHTML=`<div class="news p-4 pop"><div class="text-center border-b-4 border-black pb-2"><div class="text-xs">지구일보 · 호외 · 2026</div><h2 class="text-2xl font-bold">${esc(S.title)}</h2><div class="text-sm">대표 기자 ${esc(S.rep)}</div></div>
+<p class="my-3 leading-7">${esc(S.body)}</p><b>📊 4명의 연구 결과</b>
+<ul class="text-sm leading-6 mb-2">${R.map(r=>`<li>${r.em} ${r.sh}</li>`).join('')}</ul>
+${SEC.map(s=>`<div class="text-xs">${s[0]} ${s[1]}%<div style="background:#ccc;border-radius:9px"><div style="height:14px;border-radius:9px;background:#e11d48;width:${s[1]*2}%"></div></div></div>`).join('')}
+<p class="mt-2 text-sm">🕵️ ${S.r.n} ${esc(S.name)}의 요약: ${esc(S.sum)}</p></div>
+<div class="cd p-4 mt-3"><label>🌱 우리 모둠의 탄소 배출 멈춰! 실천 공약</label><input id="pl" class="in my-2" placeholder="예) 안 쓰는 플러그는 꼭 뽑겠습니다!">
+<button class="btn w-full" onclick="fin()">📡 전 세계에 보도하기</button><div id="bd2"></div></div>`}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function fin(){const p=$('#pl').value.trim();if(p.length<5)return alert('공약을 5자 이상 써요!');burst(['🎆','🎉','⭐','🪙'],60);$('#bd2').innerHTML=`<div class="text-center mt-3 pop"><div class="text-7xl">🏅</div><h3 class="text-2xl" style="color:var(--ye)">전설의 기후 과학자 금빛 배지 획득!</h3><p class="my-2">공약: ${esc(p)}</p><button class="btn cy" onclick="quiz()">🎮 기후 퀴즈 킹 도전</button></div>`}
+function qz(){if(S.q>=5){A.innerHTML=`<div class="cd p-6 text-center pop"><div class="text-7xl">👑</div><h2 class="text-3xl">퀴즈 킹 점수 ${S.score}/5</h2><button class="btn mt-4" onclick="go(S.r?S.back:1)">돌아가기</button> <button class="btn cy mt-4" onclick="quiz()">다시 도전</button></div>`;burst(['🪙','👑'],40);return}
+const q=QZ[S.q],o=[q[1],q[2],q[3]].sort(()=>Math.random()-.5);A.innerHTML=`<div class="cd p-4 pop"><div class="text-sm">문제 ${S.q+1}/5</div><h2 class="text-xl my-3">${q[0]}</h2><div class="grid gap-3">${o.map(x=>`<button class="btn cy text-left" onclick="qa(this,${x==q[1]})">${x}</button>`).join('')}</div></div>`}
+function qa(b,ok){const r=b.getBoundingClientRect();if(ok){S.score++;$('#sc').textContent=S.score;burst(['🪙','💰','✨'],30,r.x+r.width/2,r.y)}else{b.textContent='❌ '+b.textContent;beep(150)}document.querySelectorAll('.grid .btn').forEach(x=>x.disabled=true);setTimeout(()=>{S.q++;qz()},1000)}
+init();
+</script></body></html>
